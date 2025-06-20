@@ -38,10 +38,19 @@ class Forecast
         if ($cache->initCache(1800, 'forecast_' . md5($city . $unit), 'weather')) {
             $result = $cache->getVars();
         } elseif ($cache->startDataCache()) {
+
+            $ch = curl_init('https://api.openweathermap.org/data/2.5/weather?' . http_build_query([
+                    'q'  => $city,
+                    'appid' => $apiKey,
+                    'units' => $unit
+                ]));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            $response = curl_exec($ch);
+            curl_close($ch);
+
             $data = json_decode(
-                file_get_contents(
-                    "https://api.openweathermap.org/data/2.5/weather?q={$city}&appid={$apiKey}&units={$unit}"
-                ),
+                $response,
                 true,
                 512,
                 JSON_THROW_ON_ERROR
@@ -49,9 +58,13 @@ class Forecast
 
             if (is_array($data) && count($data)) {
                 $result = [
-                    'temp' => ceil($data['main']['temp']),
-                    'humidity' => $data['main']['humidity'],
-                    'pressure' => ceil($data['main']['pressure'] * 0.75)
+                    'result' => is_array($data['main']) && count($data['main']),
+                    'error' => $data['message'],
+                    'data' => [
+                        'temp' => ceil($data['main']['temp']),
+                        'humidity' => $data['main']['humidity'],
+                        'pressure' => ceil($data['main']['pressure'] * 0.75)
+                    ]
                 ];
             }
 
