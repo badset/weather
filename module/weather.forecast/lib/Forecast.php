@@ -30,12 +30,8 @@ class Forecast
     {
         $result = [];
 
-        if (!$apiKey) {
-            throw new \RuntimeException(Loc::GetMessage('WEATHER_API_ERROR'));
-        }
-
         $cache = Cache::createInstance();
-        if ($cache->initCache(1800, 'forecast_' . md5($city . $unit), 'weather')) {
+        if ($cache->initCache(1800, 'forecast_' . md5($apiKey . $city . $unit), 'weather')) {
             $result = $cache->getVars();
         } elseif ($cache->startDataCache()) {
 
